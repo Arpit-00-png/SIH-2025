@@ -5,4 +5,5 @@ cd SIH-2025->
 cd Client->
 npm install->
 npm run dev->
+visit the site
 
