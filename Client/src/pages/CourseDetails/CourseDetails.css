@@ -1,0 +1,154 @@
+.course-details-container {
+  padding: 2rem 0;
+}
+
+.course-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  transition: color 0.3s ease;
+}
+
+.back-button:hover {
+  color: #764ba2;
+}
+
+.course-header h1 {
+  font-size: 3rem;
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.course-description {
+  font-size: 1.2rem;
+  color: #718096;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.course-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+}
+
+.stat-card svg {
+  color: #667eea;
+}
+
+.stat-card h3 {
+  font-size: 1rem;
+  color: #718096;
+  margin-bottom: 0.25rem;
+}
+
+.stat-card p {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.course-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+
+.course-modules h2,
+.career-paths h2 {
+  font-size: 2rem;
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+}
+
+.modules-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.module-card {
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.module-card:hover {
+  transform: translateX(4px);
+}
+
+.module-card svg {
+  color: #667eea;
+}
+
+.careers-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.career-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.career-card:hover {
+  transform: translateY(-2px);
+}
+
+.career-card h3 {
+  font-size: 1.25rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.career-card p {
+  color: #718096;
+}
+
+@media (max-width: 768px) {
+  .course-header h1 {
+    font-size: 2rem;
+  }
+  
+  .course-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .course-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
