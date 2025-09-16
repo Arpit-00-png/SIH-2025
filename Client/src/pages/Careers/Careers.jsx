@@ -190,7 +190,7 @@ const Careers = () => {
         {aiSkills && (
           <p className="mt-2"><strong>Key Skills:</strong> {aiSkills.join(', ')}</p>
         )}
-
+{/* 
         {aiCourses && aiCourses.length > 0 && (
           <div className="mt-2">
             <strong>Recommended Courses:</strong>
@@ -204,7 +204,7 @@ const Careers = () => {
               ))}
             </ul>
           </div>
-        )}
+        )} */}
       </div>
 
       {error && (
