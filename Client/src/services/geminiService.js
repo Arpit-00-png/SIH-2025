@@ -313,3 +313,349 @@ export const scoreCoursesForUser = async (userProfile, stream, courses) => {
     return courses.map((c, i) => ({ course: c, score: 55 - i * 6 >= 20 ? 55 - i * 6 : 30, reason: "Relevant to your selected stream." }))
   }
 }
+export const generatePersonalizedCareers = async (userProfile, limit = 6) => {
+  try {
+    if (!apiKey) {
+      throw new Error('API key not configured');
+    }
+
+    const prompt = `Generate ${limit} personalized career recommendations for this user profile. Focus on careers that match their interests, skills, education level, and location context.
+
+User Profile: ${JSON.stringify(userProfile)}
+
+For each career, provide:
+1. Job title
+2. Brief description (1-2 sentences)
+3. Salary range in Indian context (₹X-Y LPA format)
+4. Market demand level (Very High/High/Medium/Low)
+5. Required skills (3-4 key skills)
+6. Growth prospects
+7. Match score (0-100) based on user profile
+8. Personalized reason why this career fits them
+
+Return as JSON array:
+[
+  {
+    "title": "Career Title",
+    "description": "Brief description of the role",
+    "salary": "₹X-Y LPA",
+    "demand": "High",
+    "skills": ["skill1", "skill2", "skill3"],
+    "growth": "growth prospects",
+    "matchScore": 85,
+    "personalizedReason": "why this matches their profile",
+    "icon": "briefcase" // suggest icon name from lucide-react
+  }
+]
+
+Consider:
+- Their current education level and stream
+- Stated interests and career goals  
+- Skills they already have
+- Location for salary context
+- Quiz results if available
+- Market trends in India
+- Entry-level vs experienced roles based on their profile`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const parsed = parseJsonSafe(response.text());
+    
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+
+    // Fallback with basic careers if AI parsing fails
+    return generateFallbackCareers(userProfile, limit);
+  } catch (error) {
+    console.error('Error in generatePersonalizedCareers:', error);
+    return generateFallbackCareers(userProfile, limit);
+  }
+};
+
+// Fallback career generator
+const generateFallbackCareers = (userProfile, limit) => {
+  const baseCareers = [
+    {
+      title: 'Software Engineer',
+      description: 'Design and develop software applications and systems',
+      salary: '₹6-15 LPA',
+      demand: 'Very High',
+      skills: ['Programming', 'Problem Solving', 'Teamwork'],
+      growth: 'Excellent growth with technology advancement',
+      matchScore: 75,
+      personalizedReason: 'Strong demand in tech sector matches current market trends',
+      icon: 'code'
+    },
+    {
+      title: 'Data Scientist',
+      description: 'Analyze complex data to help organizations make decisions',
+      salary: '₹8-20 LPA',
+      demand: 'Very High',
+      skills: ['Statistics', 'Machine Learning', 'Python'],
+      growth: 'Rapidly growing field with AI/ML boom',
+      matchScore: 80,
+      personalizedReason: 'High demand for data skills across industries',
+      icon: 'trending-up'
+    },
+    {
+      title: 'Digital Marketing Specialist',
+      description: 'Create and manage digital marketing campaigns',
+      salary: '₹4-12 LPA',
+      demand: 'High',
+      skills: ['Content Creation', 'Analytics', 'Social Media'],
+      growth: 'Growing with digital transformation',
+      matchScore: 70,
+      personalizedReason: 'Creative field with strong job market',
+      icon: 'megaphone'
+    },
+    {
+      title: 'Product Manager',
+      description: 'Lead product development and strategy',
+      salary: '₹10-25 LPA',
+      demand: 'High',
+      skills: ['Leadership', 'Strategy', 'Communication'],
+      growth: 'Excellent for business-minded individuals',
+      matchScore: 72,
+      personalizedReason: 'Combines technical and business skills',
+      icon: 'users'
+    },
+    {
+      title: 'UX/UI Designer',
+      description: 'Design user interfaces and experiences for digital products',
+      salary: '₹5-15 LPA',
+      demand: 'High',
+      skills: ['Design Thinking', 'Prototyping', 'User Research'],
+      growth: 'Growing with focus on user experience',
+      matchScore: 68,
+      personalizedReason: 'Creative role with technical aspects',
+      icon: 'palette'
+    },
+    {
+      title: 'Business Analyst',
+      description: 'Analyze business processes and recommend improvements',
+      salary: '₹5-14 LPA',
+      demand: 'Medium',
+      skills: ['Analysis', 'Communication', 'Process Improvement'],
+      growth: 'Stable growth across industries',
+      matchScore: 65,
+      personalizedReason: 'Analytical role suitable for problem solvers',
+      icon: 'bar-chart'
+    }
+  ];
+
+  // Sort by match score and return requested limit
+  return baseCareers
+    .sort((a, b) => b.matchScore - a.matchScore)
+    .slice(0, limit);
+};
+
+// NEW: Get trending careers based on current market
+// services/geminiService.js
+// Utility to safely parse JSON (handles ```json fences too)
+const safeJsonParse = (text) => {
+  try {
+    const cleaned = text
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
+
+    return JSON.parse(cleaned);
+  } catch (err) {
+    console.error("❌ JSON parse error in safeJsonParse:", err, "\nRaw text:", text);
+    return null;
+  }
+};
+
+
+export const callGemini = async (prompt, { expectJson = false } = {}) => {
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status} ${data.error?.message || ""}`);
+    }
+
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    if (expectJson) {
+      return safeJsonParse(text);
+    }
+
+    return text;
+  } catch (err) {
+    console.error("❌ Error in callGemini:", err);
+    throw err;
+  }
+};
+
+
+
+// --- Trending Careers Function ---
+export const getTrendingCareers = async (user) => {
+  const prompt = `
+  Provide 5 trending careers in India with complete details.
+  Keep it SHORT but STRUCTURED JSON.
+  
+  Return in this exact format:
+  [
+    {
+      "title": "Career name",
+      "description": "1–2 line description",
+      "salary": "Salary range in ₹ LPA",
+      "demand": "Very High | High | Medium | Low",
+      "skills": ["Skill1", "Skill2", "Skill3"],
+      "growth": "1 short line about future growth",
+      "icon": "code | brain | cloud | briefcase | palette | bar-chart | megaphone"
+    }
+  ]
+  Only return valid JSON. Do not add explanations.
+  `;
+
+  try {
+    const res = await callGemini(prompt, { expectJson: true });
+
+    // ✅ Fallback if response is empty/invalid
+    if (!Array.isArray(res) || res.length === 0) {
+      return [
+        {
+          title: "Software Engineer",
+          description: "Design and build software applications",
+          salary: "₹8–15 LPA",
+          demand: "High",
+          skills: ["Programming", "Problem Solving", "Teamwork"],
+          growth: "Consistent demand in tech",
+          icon: "code"
+        },
+        {
+          title: "Data Scientist",
+          description: "Analyze data to drive decisions",
+          salary: "₹10–20 LPA",
+          demand: "Very High",
+          skills: ["Python", "Machine Learning", "Statistics"],
+          growth: "Fastest growing career with AI/ML",
+          icon: "trending-up"
+        }
+      ];
+    }
+
+    // ✅ Normalize data
+    return res.map(c => ({
+      title: c.title || "Career",
+      description: c.description || "No description available",
+      salary: c.salary || "₹6–12 LPA",
+      demand: c.demand || "Medium",
+      skills: Array.isArray(c.skills) && c.skills.length ? c.skills : ["General Skills"],
+      growth: c.growth || "Steady growth",
+      icon: c.icon || "briefcase"
+    }));
+
+  } catch (err) {
+    console.error("Error fetching trending careers:", err);
+    return [
+      {
+        title: "Backup Career",
+        description: "Fallback option",
+        salary: "₹6–12 LPA",
+        demand: "Medium",
+        skills: ["Skill1", "Skill2"],
+        growth: "Stable demand",
+        icon: "briefcase"
+      }
+    ];
+  }
+};
+
+
+// NEW: Get career recommendations by category
+export const getCareersByCategory = async (category, userProfile = null, limit = 4) => {
+  try {
+    if (!apiKey) {
+      throw new Error('API key not configured');
+    }
+
+    const profileContext = userProfile ? `Consider this user profile when ranking: ${JSON.stringify(userProfile)}` : '';
+
+    const prompt = `Generate ${limit} career options in the ${category} category for the Indian job market. ${profileContext}
+
+Categories could be: Technology, Healthcare, Finance, Creative, Business, Engineering, etc.
+
+Return careers with same JSON structure as generatePersonalizedCareers function.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const parsed = parseJsonSafe(response.text());
+    
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Error in getCareersByCategory:', error);
+    return [];
+  }
+};
+
+// NEW: Compare careers side by side
+export const compareCareers = async (career1, career2, userProfile = null) => {
+  try {
+    if (!apiKey) {
+      throw new Error('API key not configured');
+    }
+
+    const profileContext = userProfile ? `User Profile: ${JSON.stringify(userProfile)}` : '';
+
+    const prompt = `Compare these two careers: ${career1} vs ${career2}
+    ${profileContext}
+
+    Provide detailed comparison including:
+    - Salary comparison in Indian context
+    - Skill requirements
+    - Growth prospects
+    - Work-life balance
+    - Entry barriers
+    - Which is better for this user profile (if provided)
+
+    Return as JSON:
+    {
+      "career1": {
+        "name": "${career1}",
+        "pros": ["advantage1", "advantage2"],
+        "cons": ["disadvantage1", "disadvantage2"],
+        "salary": "₹X-Y LPA",
+        "skills": ["skill1", "skill2"],
+        "growth": "growth prospects"
+      },
+      "career2": {
+        "name": "${career2}",
+        "pros": ["advantage1", "advantage2"],
+        "cons": ["disadvantage1", "disadvantage2"],
+        "salary": "₹X-Y LPA",
+        "skills": ["skill1", "skill2"],
+        "growth": "growth prospects"
+      },
+      "recommendation": "Which career is better for this user and why",
+      "summary": "Overall comparison summary"
+    }`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return parseJsonSafe(response.text()) || null;
+  } catch (error) {
+    console.error('Error in compareCareers:', error);
+    return null;
+  }
+};
+

@@ -13,7 +13,15 @@
   align-items: center;
   padding: 0 2rem;
 }
-
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.logo img {
+  height: 40px;
+  width: 40px;
+}
 .logo h2 {
   margin: 0;
   font-size: 1.5rem;

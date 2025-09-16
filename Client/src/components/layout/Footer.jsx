@@ -9,7 +9,7 @@ const Footer = () => {
         <p>
           Made with <Heart size={16} className="heart-icon" /> for your career journey
         </p>
-        <p>&copy; 2024 CareerGuide. All rights reserved.</p>
+        <p>&copy; 2025 EduNavigator . All rights reserved.</p>
       </div>
     </footer>
   )

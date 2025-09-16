@@ -6,13 +6,12 @@ import './Login.css'
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
-    password: '',
-    education: '',
-    location: ''
+    password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const { login } = useUser()
 
@@ -23,18 +22,44 @@ const Login = () => {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (formData.email && formData.password) {
-      login({
-        name: formData.name || 'Student',
-        email: formData.email,
-        education: formData.education,
-        location: formData.location,
-        interests: [],
-        skills: []
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
       })
-      navigate('/')
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed")
+      }
+
+      // ✅ Store JWT token
+      localStorage.setItem("token", data.token)
+
+      // ✅ Update context with user info from backend
+      login({
+        name: data.user.name,
+        email: data.user.email,
+        education: data.user.education || '',
+        location: data.user.location || '',
+        interests: data.user.interests || [],
+        skills: data.user.skills || []
+      })
+
+      // ✅ Redirect to home page
+      navigate("/")
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -47,22 +72,6 @@ const Login = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="name" className="form-label">Full Name</label>
-            <div className="input-group">
-              <User size={20} className="input-icon" />
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="Enter your name"
-              />
-            </div>
-          </div>
-
           <div className="form-group">
             <label htmlFor="email" className="form-label">Email Address</label>
             <div className="input-group">
@@ -104,37 +113,15 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="education" className="form-label">Current Education</label>
-            <input
-              type="text"
-              id="education"
-              name="education"
-              value={formData.education}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="e.g., Class 12, B.Tech 2nd year"
-            />
-          </div>
+          {error && <p className="error-text">{error}</p>}
 
-          <div className="form-group">
-            <label htmlFor="location" className="form-label">Location</label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="City, State"
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary login-btn">Sign In</button>
+          <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
         </form>
 
         <div className="login-footer">
-          <p>Don't have an account? <a href="#" className="link">Sign up</a></p>
+          <p>Don't have an account? <a href="/register" className="link">Sign up</a></p>
         </div>
       </div>
     </div>

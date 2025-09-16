@@ -18,7 +18,8 @@ const Header = () => {
     <header className="header">
       <div className="header-container">
         <div className="logo">
-          <h2>CareerGuide</h2>
+          <img src="/Group 3.png" alt="Logo" />
+          <h2>EduNavigator</h2>
         </div>
         <nav className="nav">
           {navItems.map(({ path, label, icon: Icon }) => (
